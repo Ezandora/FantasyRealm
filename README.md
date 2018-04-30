@@ -1,0 +1,2 @@
+# FantasyRealm
+Automates FantasyRealm
