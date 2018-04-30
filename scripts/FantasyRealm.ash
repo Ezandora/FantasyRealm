@@ -1,6 +1,7 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.0.1";
+string __fantasyrealm_version = "1.0.2";
 boolean __setting_bosses_ready = true;
+boolean __setting_test_saucestorm = true && my_id() == 1557284;
 
 Record FantasyRealmState
 {
@@ -294,6 +295,7 @@ The Foreboding Cave - DO NOT MELEE
 Near the Witch's House - group damage. hmm...
 The Troll Fortress - hot damage only, immune to everything else
 The Sprawling Cemetery - ghost (physical immune?), deals passive spooky damage
+The Mystic Wood - don't attack, ???
 -The Rubee Mine - kill them quickly, they do 90% HP damage at the start
 √The Faerie Cyrkle - attack only
 √The Druidic Campsite - you get poisoned!
@@ -407,16 +409,16 @@ string FantasyRealmCombatMacroForLocation(location l)
 	
 	
 	//Cannelloni Cannon doesn't do group damage... weapon of the pastalord...
-	if ($skill[saucestorm].have_skill())
+	if ($skill[saucestorm].have_skill() && !__setting_test_saucestorm)
 		combat_macro += "cast saucestorm; repeat;";
-    else if ($skill[saucegeyser].have_skill())
+    else if ($skill[saucegeyser].have_skill() && !__setting_test_saucestorm)
         combat_macro += "cast saucegeyser; repeat;";
     else
     {
     	if (l == $location[Near the Witch's House])
         {
         	boolean found_one = false;
-            foreach s in $skills[Cannelloni Cannon,Wave of Sauce,Splattersmash,Harpoon!,Garbage Nova,Firegate]
+            foreach s in $skills[saucestorm,saucegeyser,Cannelloni Cannon,Wave of Sauce,Splattersmash,Harpoon!,Garbage Nova,Firegate]
             {
             	if (!s.have_skill()) continue;
                 combat_macro += "cast " + s + "; repeat;";
@@ -427,8 +429,12 @@ string FantasyRealmCombatMacroForLocation(location l)
             if (!found_one)
 	        	abort("I have no idea how to fight in the witch's house for you. Maybe buy \"Trash, a Memoir\" in the mall, and use it? It's pricy...");
         }
-        else if ($locations[The Towering Mountains,The Foreboding Cave,The Troll Fortress,The Sprawling Cemetery] contains l)
+        else if ($locations[The Foreboding Cave,The Troll Fortress] contains l)
+        {
+        	//We use lovesongs in The Sprawling Cemetery because we die quickly there? hmm... or... spooky res!
+            //same for The Towering Mountains, - we use double-ice
 	    	use_lovesongs = true;
+        }
         else if ($locations[The Lair of the Phoenix,The Dragon's Moor,Duke Vampire's Chateau,The Ogre Chieftain's Keep,The Master Thief's Chalet,The Ghoul King's Catacomb,The Archwizard's Tower,The Spider Queen's Lair,The Ley Nexus] contains l) //bosses... lovesongs I guess?
         	use_lovesongs = true;
         else //I'm... sure this will work out perfectly. Yes.
@@ -458,8 +464,9 @@ string FantasyRealmCombatMacroForLocation(location l)
         {
         	retrieve_item(10, chosen_lovesong);
             
-            if (have_double_combat_item)
+            if (have_double_combat_item && false)
             {
+            	//one is probably enough? so skip this
                 combat_macro += "use " + chosen_lovesong.to_int() + ", " + chosen_lovesong.to_int() + "; repeat;";
             }
             else
@@ -492,6 +499,14 @@ void FantasyRealmPrepareToAdventure(location l)
         minimum_modifiers_needed = {"Stench Resistance":5};
     else if (l == $location[The Spider Queen's Lair])
         minimum_modifiers_needed = {"Moxie":500};
+    
+    
+    if (l == $location[The Faerie Cyrkle])
+    {
+    	//buff up to fight these quads
+    	int resistance_level = 11;
+    	minimum_modifiers_needed = {"Cold Resistance":resistance_level,"Hot Resistance":resistance_level,"Stench Resistance":resistance_level,"Sleaze Resistance":resistance_level,"Spooky Resistance":resistance_level,"Muscle":190 + monster_level_adjustment()};
+    }
     if (minimum_modifiers_needed.count() > 0)
     {
     	//abort("write minimum_modifiers_needed code");
@@ -925,6 +940,7 @@ FantasyRealmNextLocation FantasyRealmPickNextLocation()
     //Thiefing bosses:
     if (__fantasyrealm_strategy == FANTASYREALM_STRATEGY_SPIDER_QUEEN)
     {
+        strategy_fulfilled = true;
     	//500 moxie required for fight
         //unlock area first
         if (!__fantasyrealm_state.open_areas[$location[The Spider Queen's Lair]])
@@ -1161,8 +1177,10 @@ void FantasyRealmRunLoop()
    			
 			if (next_location.l == $location[The Faerie Cyrkle])
 				main_maximisation = "all res";
-            if (next_location.l == $location[The Ley Nexus])
+            if ($locations[The Ley Nexus,The Towering Mountains] contains next_location.l)
                 main_maximisation = "elemental damage";
+            if (next_location.l == $location[The Sprawling Cemetery])
+            	main_maximisation = "spooky res";
             foreach it in $items[LyleCo premium magnifying glass,LyleCo premium monocle]
             {
             	if (it.available_amount() > 0)
@@ -1172,7 +1190,7 @@ void FantasyRealmRunLoop()
             {
                 maximise_string += " +equip " + it;
             }
-            if ($locations[The Evil Cathedral,The Cursed Village,The Ogre Chieftain's Keep,The Ley Nexus] contains next_location.l)
+            if ($locations[The Evil Cathedral,The Cursed Village,The Ogre Chieftain's Keep,The Ley Nexus,The Mystic Wood,The Sprawling Cemetery,The Towering Mountains,] contains next_location.l)
             {
                 maximise_string += " +equip double-ice box";
             }
@@ -1276,6 +1294,7 @@ void FantasyRealmOutputHelp()
 }
 
 //Bosses tested (with saucestorm): dragon, ogre, ley incursion, ghuol king (partially), Archwizard, Phoenix
+//Bosses tested (without saucestorm): Spider Queen
 void main(string arguments)
 {
 	arguments = arguments.to_lower_case();
