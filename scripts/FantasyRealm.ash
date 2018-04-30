@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.0";
+string __fantasyrealm_version = "1.0.1";
 boolean __setting_bosses_ready = true;
 
 Record FantasyRealmState
@@ -694,7 +694,7 @@ FantasyRealmNextLocation FantasyRealmNextLocationToReachTarget(location target_l
     else if (target_location == $location[The Master Thief's Chalet])
         return FantasyRealmNextLocationToReachTarget($location[The Towering Mountains], 1282, 3, $items[FantasyRealm Rogue's Mask], false);
     else if (target_location == $location[The Lair of the Phoenix])
-        return FantasyRealmNextLocationToReachTarget($location[The Foreboding Cave], 1289, 3, blank_equipment, false);
+        return FantasyRealmNextLocationToReachTarget($location[The Foreboding Cave], 1289, 3, $items[FantasyRealm Mage's Hat], false);
     
     //Mystic wood:
     if (target_location == $location[The Faerie Cyrkle])
@@ -907,6 +907,7 @@ FantasyRealmNextLocation FantasyRealmPickNextLocation()
     }
     if (__fantasyrealm_strategy == FANTASYREALM_STRATEGY_PHOENIX)
     {
+        strategy_fulfilled = true;
     	//+5 hot resistance required for fight
         if ($item[flask of holy water].available_amount() > 0)
         {
@@ -1274,7 +1275,7 @@ void FantasyRealmOutputHelp()
     }
 }
 
-//Bosses tested (with saucestorm): dragon, ogre, ley incursion, ghuol king (partially), Archwizard
+//Bosses tested (with saucestorm): dragon, ogre, ley incursion, ghuol king (partially), Archwizard, Phoenix
 void main(string arguments)
 {
 	arguments = arguments.to_lower_case();
