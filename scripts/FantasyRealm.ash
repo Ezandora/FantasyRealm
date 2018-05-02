@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.0.2";
+string __fantasyrealm_version = "1.0.3";
 boolean __setting_bosses_ready = true;
 boolean __setting_test_saucestorm = true && my_id() == 1557284;
 
@@ -13,6 +13,8 @@ Record FantasyRealmState
 	boolean [location] open_areas;
     boolean [location] areas_at_nc;
     boolean [location] areas_that_have_been_opened;
+    
+    int [monster] monsters_killed;
 };
 
 Record FantasyRealmPermanentState
@@ -84,6 +86,14 @@ FantasyRealmState FantasyRealmStateParse()
         if (area == $location[none]) continue;
         state.areas_that_have_been_opened[area] = true;
     }
+    //monsters killed:
+    foreach key, entry in get_property("_frMonstersKilled").split_string(",")
+    {
+    	if (entry == "") continue;
+    	string [int] entry_split = entry.split_string(":");
+        if (entry_split.count() != 2) continue;
+        state.monsters_killed[entry_split[0].to_monster()] = entry_split[1].to_int();
+    }
     
     //Parse areas:
     string [int][int] snarfblats = fantasyrealm_pagetext.group_string("adventure.php\\?snarfblat=([0-9]*)");
@@ -143,7 +153,22 @@ FantasyRealmState FantasyRealmStateParse()
     	if (__fantasyrealm_permanent_state.encounters_seen[nc_name])
         	state.areas_at_nc[l] = true;
     }
-    
+    //Bosses are always at NC:
+    foreach l in $locations[The Lair of the Phoenix,The Dragon's Moor,Duke Vampire's Chateau,The Ogre Chieftain's Keep,The Master Thief's Chalet,The Ghoul King's Catacomb,The Archwizard's Tower,The Spider Queen's Lair,The Ley Nexus]
+    {
+    	if (state.open_areas[l])
+        	state.areas_at_nc[l] = true;
+    }
+    //Infer NC status from monsters defeated:
+    //This should fix the putrid swamp turn-taking problem, and also take less time. But, it means we don't encounter the haunted doghouse NCs as much.
+    foreach l in $locations[The Towering Mountains,The Mystic Wood,The Putrid Swamp,The Cursed Village,The Sprawling Cemetery,The Old Rubee Mine,The Foreboding Cave,The Faerie Cyrkle,The Druidic Campsite,Near the Witch's House,The Evil Cathedral,The Barrow Mounds,The Cursed Village Thieves' Guild,The Troll Fortress,The Labyrinthine Crypt]
+    {
+    	if (!state.open_areas[l]) continue;
+    	monster area_monster = l.get_monsters()[0];
+        if (area_monster == $monster[none]) continue;
+        if (state.monsters_killed[area_monster] >= 5)
+            state.areas_at_nc[l] = true;
+    }
     
 	__fantasyrealm_state = state;
 	return state;
@@ -331,6 +356,10 @@ string FantasyRealmCombatMacroForLocation(location l)
 	}
 	if (l == $location[The Labyrinthine Crypt])
 	{
+        if ($item[new age healing crystal].mall_price() >= 1000)
+        {
+            abort("I'm out of ideas.");
+        }
 		//crypt creeper: heal five hits
         cli_execute("acquire 5 new age healing crystal");
         for i from 0 to 5
@@ -362,6 +391,16 @@ string FantasyRealmCombatMacroForLocation(location l)
         else
         {
         	use_lovesongs = true;
+        }
+    }
+    if (l == $location[The Old Rubee Mine] && !($skill[saucestorm].have_skill() || $skill[saucegeyser].have_skill()))
+    {
+    	//We don't have saucestorm/saucegeyser - play it safe and heal at the start.
+        //I believe both of those skills will one-hit the grobolds? So.
+        if ($item[new age healing crystal].mall_price() < 1000)
+        {
+        	cli_execute("acquire 1 new age healing crystal");
+            combat_macro += "use 8425;";
         }
     }
 	
@@ -484,7 +523,7 @@ void FantasyRealmPrepareToAdventure(location l)
 	if (l == $location[The Archwizard's Tower])
 		minimum_modifiers_needed = {"Cold Resistance":5};
     else if (l == $location[Duke Vampire's Chateau])
-        minimum_modifiers_needed = {"Combat Initiative":250};
+        minimum_modifiers_needed = {"Initiative":250};
     else if (l == $location[The Ghoul King's Catacomb])
         minimum_modifiers_needed = {"Spooky Resistance":5};
     else if (l == $location[The Ley Nexus])
@@ -965,6 +1004,7 @@ FantasyRealmNextLocation FantasyRealmPickNextLocation()
     }
     if (__fantasyrealm_strategy == FANTASYREALM_STRATEGY_DUKE_VAMPIRE)
     {
+        strategy_fulfilled = true;
     	//requires 250% init for fight
         if (!__fantasyrealm_state.open_areas[$location[Duke Vampire's Chateau]])
         {
@@ -993,6 +1033,7 @@ FantasyRealmNextLocation FantasyRealmPickNextLocation()
     }
     if (__fantasyrealm_strategy == FANTASYREALM_STRATEGY_MASTER_THIEF)
     {
+        strategy_fulfilled = true;
     	//+5 sleaze resistance required for fight
         if ($item[notarized arrest warrant].available_amount() > 0)
         {
@@ -1173,22 +1214,35 @@ void FantasyRealmRunLoop()
         {
         	string main_maximisation = "muscle";
         	string maximise_string;
+            //Hmm. Maybe we should add -ML?
 			maximise_string = "-tie -familiar -equip buddy bjorn -equip shield of the Skeleton Lord +equip fantasyrealm g. e. m.";
    			
 			if (next_location.l == $location[The Faerie Cyrkle])
 				main_maximisation = "all res";
             if ($locations[The Ley Nexus,The Towering Mountains] contains next_location.l)
-                main_maximisation = "elemental damage";
+                main_maximisation = "1.0 elemental damage 0.5 muscle"; //muscle, so we can hit them
             if (next_location.l == $location[The Sprawling Cemetery])
             	main_maximisation = "spooky res";
-            foreach it in $items[LyleCo premium magnifying glass,LyleCo premium monocle]
+            if (next_location.l == $location[The Putrid Swamp])
+            	main_maximisation = "stench res";
+            if ($locations[The Bandit Crossroads,The Towering Mountains,The Mystic Wood,The Putrid Swamp,The Cursed Village,The Sprawling Cemetery,The Old Rubee Mine,The Foreboding Cave,The Faerie Cyrkle,The Druidic Campsite,Near the Witch's House,The Evil Cathedral,The Barrow Mounds,The Cursed Village Thieves' Guild,The Troll Fortress,The Labyrinthine Crypt] contains next_location.l)
             {
-            	if (it.available_amount() > 0)
-                	maximise_string += " +equip " + it;
+                foreach it in $items[LyleCo premium magnifying glass,LyleCo premium monocle]
+                {
+                    if (it.available_amount() > 0)
+                        maximise_string += " +equip " + it;
+                }
             }
             foreach it in next_location.equipment_required
             {
                 maximise_string += " +equip " + it;
+                if (it.to_slot() == $slot[weapon])
+                {
+                	//force maximise to avoid equipping the dragon slaying sword in the offhand:
+                    if ($slot[off-hand].equipped_item() != $item[none])
+	                	cli_execute("unequip off-hand");
+                    maximise_string += " -offhand";
+                }
             }
             if ($locations[The Evil Cathedral,The Cursed Village,The Ogre Chieftain's Keep,The Ley Nexus,The Mystic Wood,The Sprawling Cemetery,The Towering Mountains,] contains next_location.l)
             {
@@ -1235,13 +1289,15 @@ void FantasyRealmMakeConsumables()
 
 void FantasyRealmAutoPurchase()
 {
-	if (my_id() == 307559 || my_id() == 216194) //Mme_Defarge and holderofsecrets; do not wreck their collections
+	if (my_id() == 307559 || my_id() == 216194) //Mme_Defarge and holderofsecrets; do not wreck their collections.
 	{
 		print("You are " + my_name() + ", not purchasing anything. Wouldn't want to ruin a display case.", "red");
         return;
 	}
 	//Buy, buy, buy!
-	
+	//What can we afford?
+	if ($item[fantasyrealm g. e. m.].available_amount() == 0) return;
+	if ($item[fantasyrealm g. e. m.].equipped_amount() == 0) equip($slot[acc3], $item[fantasyrealm g. e. m.]);
 }
 
 string FantasyRealmHelpOutputItemString(item it)
@@ -1294,7 +1350,7 @@ void FantasyRealmOutputHelp()
 }
 
 //Bosses tested (with saucestorm): dragon, ogre, ley incursion, ghuol king (partially), Archwizard, Phoenix
-//Bosses tested (without saucestorm): Spider Queen
+//Bosses tested (without saucestorm): Spider Queen, Vampire, Master Thief, dragon, ogre
 void main(string arguments)
 {
 	arguments = arguments.to_lower_case();
@@ -1309,9 +1365,14 @@ void main(string arguments)
     if ($item[double-ice box].available_amount() == 0 && can_interact())
         cli_execute("acquire double-ice box");
 	
-	if (arguments.contains_text("help"))
+	if (arguments.contains_text("help") || arguments == "")
 	{
 		FantasyRealmOutputHelp();
+        return;
+	}
+	if (inebriety_limit() < my_inebriety())
+	{
+		print("You are overdrunk.", "red");
         return;
 	}
 	boolean sell_in_mall = false;
@@ -1485,7 +1546,7 @@ void main(string arguments)
     }
 	FantasyRealmMakeConsumables();
 	if (should_auto_purchase)
-		FantasyRealmAutoPurchase();
+		FantasyRealmAutoPurchase(); //this can't do anything because we don't have the g. e. m. yet. hmm.
 	FantasyRealmRunLoop();
 	FantasyRealmMakeConsumables();
     if (should_auto_purchase)
