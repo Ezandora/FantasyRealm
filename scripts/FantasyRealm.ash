@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1";
+string __fantasyrealm_version = "1.1.1";
 boolean __setting_bosses_ready = true;
 boolean __setting_test_saucestorm = false && my_id() == 1557284;
 
@@ -1305,6 +1305,7 @@ void FantasyRealmAutoPurchase()
 	//What can we afford?
 	if ($item[fantasyrealm g. e. m.].available_amount() == 0) return;
 	if ($item[fantasyrealm g. e. m.].equipped_amount() == 0) equip($slot[acc3], $item[fantasyrealm g. e. m.]);
+	visit_url("place.php?whichplace=realm_fantasy"); //update properties
 	
 	int [item] rubee_costs = {$item[LyleCo premium magnifying glass]:150, $item[LyleCo premium monocle]:150, $item[LyleCo premium pickaxe]:300, $item[LyleCo premium rope]:300, $item[map to the Cursed Village]:500, $item[map to the Mystic Wood]:500, $item[map to the Putrid Swamp]:500, $item[map to the Sprawling Cemetery]:500, $item[map to the Towering Mountains]:500};
 	
@@ -1343,6 +1344,7 @@ void FantasyRealmAutoPurchase()
         	boolean confirm = user_confirm("Using map " + map + ". Okay?");
             if (!confirm) break;
             use(1, map);
+            visit_url("place.php?whichplace=realm_fantasy"); //update map properties, just to be certain
         }
     }
 }
