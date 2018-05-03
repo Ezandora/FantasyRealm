@@ -1,7 +1,7 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.0.3";
+string __fantasyrealm_version = "1.1";
 boolean __setting_bosses_ready = true;
-boolean __setting_test_saucestorm = true && my_id() == 1557284;
+boolean __setting_test_saucestorm = false && my_id() == 1557284;
 
 Record FantasyRealmState
 {
@@ -384,9 +384,9 @@ string FantasyRealmCombatMacroForLocation(location l)
 	}
     if (l == $location[The Ghoul King's Catacomb])
     {
-    	if ($skill[saucegeyser].have_skill())
+    	if ($skill[saucegeyser].have_skill() && !__setting_test_saucestorm)
         	combat_macro += "cast saucegeyser; repeat;";
-        else if ($skill[weapon of the pastalord].have_skill())
+        else if ($skill[weapon of the pastalord].have_skill() && !__setting_test_saucestorm)
             combat_macro += "cast weapon of the pastalord; repeat;";
         else
         {
@@ -495,6 +495,7 @@ string FantasyRealmCombatMacroForLocation(location l)
         	//love song of vague ambiguity deals physical damage, ignoring
         	foreach it in $items[love song of smoldering passion,love song of disturbing obsession,love song of icy revenge,love song of naughty innuendo,love song of sugary cuteness]
             {
+            	if (it == $item[love song of smoldering passion] && l == $location[The Lair of the Phoenix]) continue;
             	if (chosen_lovesong == $item[none] || chosen_lovesong.mall_price() > it.mall_price())
 					chosen_lovesong = it;
             }
@@ -702,7 +703,6 @@ FantasyRealmNextLocation FantasyRealmNextLocationToReachTarget(location target_l
     } 
     //Follow path to unlock:
     
-    int REPLACEME = -1;
     
     boolean [item] blank_equipment;
     //Main areas:
@@ -811,7 +811,6 @@ FantasyRealmNextLocation FantasyRealmPickNextLocation()
     }
     if (__fantasyrealm_strategy == FANTASYREALM_STRATEGY_GEMS_GEMS_GEMS)
     {
-    	//FIXME write once we know areas that were unlocked
         if (__fantasyrealm_state.open_areas[$location[the cursed village]] || !__fantasyrealm_state.areas_that_have_been_opened[$location[the cursed village]])
         {
         	//Cursed village -> fortunate, son
@@ -835,7 +834,6 @@ FantasyRealmNextLocation FantasyRealmPickNextLocation()
         //anything else...?
     }
     boolean strategy_fulfilled = false;
-    int REPLACEME = -1;
     //Warrior bosses:
     if (__fantasyrealm_strategy == FANTASYREALM_STRATEGY_DRAGON)
     {
@@ -1153,6 +1151,23 @@ FantasyRealmNextLocation FantasyRealmPickNextLocation()
 }
 
 
+
+void FantasyRealmStartQuest()
+{
+    if ($item[fantasyrealm g. e. m.].available_amount() > 0) return;
+    int [item] hats_to_options = {$item[FantasyRealm Warrior's Helm]:1, $item[FantasyRealm Mage's Hat]:2, $item[FantasyRealm Rogue's Mask]:3};
+    //start it:
+    item which_hat = $item[none];
+    foreach it in $items[FantasyRealm Warrior's Helm,FantasyRealm Mage's Hat,FantasyRealm Rogue's Mask]
+    {
+        if (it.available_amount() < which_hat.available_amount() || which_hat == $item[none])
+                which_hat = it;
+    }
+    //FIXME proper hat for boss
+    visit_url("place.php?whichplace=realm_fantasy&action=fr_initcenter");
+    visit_url("choice.php?whichchoice=1280&option=" + hats_to_options[which_hat]);
+}
+
 void FantasyRealmRunLoop()
 {
 	//Bring forth the tools from hangk's:
@@ -1166,7 +1181,7 @@ void FantasyRealmRunLoop()
 	int breakout = 100;
 	string last_maximise_string = "";
     FantasyRealmStateParse();
-	while (breakout > 0 && (__fantasyrealm_state.hours_left != 0 || !__fantasyrealm_state.started))
+	while (breakout > 0 && (__fantasyrealm_state.hours_left != 0 || !__fantasyrealm_state.started) && my_adventures() > 0)
 	{
 		breakout -= 1;
 		FantasyRealmStateParse();
@@ -1190,17 +1205,7 @@ void FantasyRealmRunLoop()
         
         if (!__fantasyrealm_state.started)
         {
-        	int [item] hats_to_options = {$item[FantasyRealm Warrior's Helm]:1, $item[FantasyRealm Mage's Hat]:2, $item[FantasyRealm Rogue's Mask]:3};
-        	//start it:
-            item which_hat = $item[none];
-            foreach it in $items[FantasyRealm Warrior's Helm,FantasyRealm Mage's Hat,FantasyRealm Rogue's Mask]
-            {
-            	if (it.available_amount() < which_hat.available_amount() || which_hat == $item[none])
-             	   	which_hat = it;
-            }
-            //FIXME proper hat for boss
-            visit_url("place.php?whichplace=realm_fantasy&action=fr_initcenter");
-            visit_url("choice.php?whichchoice=1280&option=" + hats_to_options[which_hat]);
+        	FantasyRealmStartQuest();
         	continue;
         }
         FantasyRealmNextLocation next_location = FantasyRealmPickNextLocation();
@@ -1225,6 +1230,8 @@ void FantasyRealmRunLoop()
             	main_maximisation = "spooky res";
             if (next_location.l == $location[The Putrid Swamp])
             	main_maximisation = "stench res";
+            if (next_location.l == $location[The Barrow Mounds])
+            	main_maximisation = "initiative"; //run away better
             if ($locations[The Bandit Crossroads,The Towering Mountains,The Mystic Wood,The Putrid Swamp,The Cursed Village,The Sprawling Cemetery,The Old Rubee Mine,The Foreboding Cave,The Faerie Cyrkle,The Druidic Campsite,Near the Witch's House,The Evil Cathedral,The Barrow Mounds,The Cursed Village Thieves' Guild,The Troll Fortress,The Labyrinthine Crypt] contains next_location.l)
             {
                 foreach it in $items[LyleCo premium magnifying glass,LyleCo premium monocle]
@@ -1298,6 +1305,46 @@ void FantasyRealmAutoPurchase()
 	//What can we afford?
 	if ($item[fantasyrealm g. e. m.].available_amount() == 0) return;
 	if ($item[fantasyrealm g. e. m.].equipped_amount() == 0) equip($slot[acc3], $item[fantasyrealm g. e. m.]);
+	
+	int [item] rubee_costs = {$item[LyleCo premium magnifying glass]:150, $item[LyleCo premium monocle]:150, $item[LyleCo premium pickaxe]:300, $item[LyleCo premium rope]:300, $item[map to the Cursed Village]:500, $item[map to the Mystic Wood]:500, $item[map to the Putrid Swamp]:500, $item[map to the Sprawling Cemetery]:500, $item[map to the Towering Mountains]:500};
+	
+	//Order designed to maximise gems:
+	//Though I don't know if the gems command uses it efficiently... I wasn't paying attention.
+	item [int] unlock_order;
+	unlock_order[unlock_order.count()] = $item[LyleCo premium magnifying glass];
+    unlock_order[unlock_order.count()] = $item[LyleCo premium monocle];
+    if (!get_property("frVillageUnlocked").to_boolean()) unlock_order[unlock_order.count()] = $item[map to the Cursed Village];
+    if (!get_property("frMountainsUnlocked").to_boolean()) unlock_order[unlock_order.count()] = $item[map to the Towering Mountains];
+    unlock_order[unlock_order.count()] = $item[LyleCo premium pickaxe];
+    if (!get_property("frCemetaryUnlocked").to_boolean()) unlock_order[unlock_order.count()] = $item[map to the Sprawling Cemetery];
+    if (!get_property("frWoodUnlocked").to_boolean()) unlock_order[unlock_order.count()] = $item[map to the Mystic Wood];
+    if (!get_property("frSwampUnlocked").to_boolean()) unlock_order[unlock_order.count()] = $item[map to the Putrid Swamp];
+    unlock_order[unlock_order.count()] = $item[LyleCo premium rope];
+    
+    foreach key, it in unlock_order
+    {
+    	if (it.have_at_least_one_of_item_somewhere()) continue;
+        //Buy!
+        if ($item[Rubee&trade;].available_amount() < rubee_costs[it]) break;
+        cli_execute("make 1 " + it);
+    }
+    
+    item [int] map_using_order;
+    if (!get_property("frVillageUnlocked").to_boolean()) map_using_order[map_using_order.count()] = $item[map to the Cursed Village];
+    if (!get_property("frMountainsUnlocked").to_boolean()) map_using_order[map_using_order.count()] = $item[map to the Towering Mountains];
+    if (!get_property("frWoodUnlocked").to_boolean()) map_using_order[map_using_order.count()] = $item[map to the Mystic Wood];
+    if (!get_property("frCemetaryUnlocked").to_boolean()) map_using_order[map_using_order.count()] = $item[map to the Sprawling Cemetery];
+    if (!get_property("frSwampUnlocked").to_boolean()) map_using_order[map_using_order.count()] = $item[map to the Putrid Swamp];
+    
+    foreach key, map in map_using_order
+    {
+    	if (map.available_amount() > 0)
+        {
+        	boolean confirm = user_confirm("Using map " + map + ". Okay?");
+            if (!confirm) break;
+            use(1, map);
+        }
+    }
 }
 
 string FantasyRealmHelpOutputItemString(item it)
@@ -1350,7 +1397,7 @@ void FantasyRealmOutputHelp()
 }
 
 //Bosses tested (with saucestorm): dragon, ogre, ley incursion, ghuol king (partially), Archwizard, Phoenix
-//Bosses tested (without saucestorm): Spider Queen, Vampire, Master Thief, dragon, ogre
+//Bosses tested (without saucestorm): Spider Queen, Vampire, Master Thief, dragon, ogre, ghuol king (partially), ley incursion, wizard, Phoenix (partially)
 void main(string arguments)
 {
 	arguments = arguments.to_lower_case();
@@ -1545,8 +1592,9 @@ void main(string arguments)
         print_html("<small>it's totally gonna break</small>");
     }
 	FantasyRealmMakeConsumables();
+	FantasyRealmStartQuest();
 	if (should_auto_purchase)
-		FantasyRealmAutoPurchase(); //this can't do anything because we don't have the g. e. m. yet. hmm.
+		FantasyRealmAutoPurchase();
 	FantasyRealmRunLoop();
 	FantasyRealmMakeConsumables();
     if (should_auto_purchase)
