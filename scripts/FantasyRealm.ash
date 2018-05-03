@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.1";
+string __fantasyrealm_version = "1.1.2";
 boolean __setting_bosses_ready = true;
 boolean __setting_test_saucestorm = false && my_id() == 1557284;
 
@@ -1398,7 +1398,7 @@ void FantasyRealmOutputHelp()
     }
 }
 
-//Bosses tested (with saucestorm): dragon, ogre, ley incursion, ghuol king (partially), Archwizard, Phoenix
+//Bosses tested (with saucestorm): dragon, ogre, ley incursion, ghuol king (partially), Archwizard, Phoenix, Vampire
 //Bosses tested (without saucestorm): Spider Queen, Vampire, Master Thief, dragon, ogre, ghuol king (partially), ley incursion, wizard, Phoenix (partially)
 void main(string arguments)
 {
@@ -1539,6 +1539,18 @@ void main(string arguments)
                 __fantasyrealm_strategy = FANTASYREALM_STRATEGY_POTION_OF_HEROISM;
             else
             {
+                if (monster_factoids_available($monster[spooky vampire], false) > 0)
+                {
+                	//Factoids!
+                    int [monster] strategy_for_boss = {$monster["Phoenix"]:FANTASYREALM_STRATEGY_PHOENIX, $monster[Sewage Treatment Dragon]:FANTASYREALM_STRATEGY_DRAGON, $monster[Duke Vampire]:FANTASYREALM_STRATEGY_DUKE_VAMPIRE, $monster[Spider Queen]:FANTASYREALM_STRATEGY_SPIDER_QUEEN, $monster[Archwizard]:FANTASYREALM_STRATEGY_ARCHWIZARD, $monster[Ley Incursion]:FANTASYREALM_STRATEGY_LEY_INCURSION, $monster[Ghoul King]:FANTASYREALM_STRATEGY_GHOUL_KING, $monster[Ogre Chieftain]:FANTASYREALM_STRATEGY_OGRE_CHIEFTAIN, $monster[Ted Schwartz\, Master Thief]:FANTASYREALM_STRATEGY_MASTER_THIEF, $monster[Skeleton Lord]:FANTASYREALM_STRATEGY_SKELETON_LORD_THIEF};
+                    foreach m, strategy in strategy_for_boss
+                    {
+                    	if (m.monster_factoids_available(false) >= 3) continue;
+                        if (m == $monster[Skeleton Lord] && !have_outfit("FantasyRealm Thief's Outfit")) continue;
+                        __fantasyrealm_strategy = strategy;
+                        break;
+                    } 
+                }
             	//Collect consumables?
                 item chosen_item;
                 foreach it in $items[bad rum and good cola,denastified haunch,potion of heroism]
@@ -1547,7 +1559,10 @@ void main(string arguments)
                     if (chosen_item == $item[none] || chosen_item.available_amount() + chosen_item.shop_amount() > it.available_amount() + it.shop_amount())
                         chosen_item = it;
                 }
-                if (chosen_item == $item[bad rum and good cola])
+                if (__fantasyrealm_strategy != FANTASYREALM_STRATEGY_NONE)
+                {
+                }
+                else if (chosen_item == $item[bad rum and good cola])
                     __fantasyrealm_strategy = FANTASYREALM_STRATEGY_BAD_RUM_AND_GOOD_COLA;
                 else if (chosen_item == $item[denastified haunch])
                     __fantasyrealm_strategy = FANTASYREALM_STRATEGY_DENASTIFIED_HAUNCH;
@@ -1619,4 +1634,7 @@ void main(string arguments)
         }
         print_html(delta + " " + it);
 	}
+	
+    if ($item[FantasyRealm G. E. M.].equipped_amount() > 0)
+        cli_execute("unequip FantasyRealm G. E. M.");
 }
