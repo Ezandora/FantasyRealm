@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.2";
+string __fantasyrealm_version = "1.1.3";
 boolean __setting_bosses_ready = true;
 boolean __setting_test_saucestorm = false && my_id() == 1557284;
 
@@ -1227,9 +1227,9 @@ void FantasyRealmRunLoop()
             if ($locations[The Ley Nexus,The Towering Mountains] contains next_location.l)
                 main_maximisation = "1.0 elemental damage 0.5 muscle"; //muscle, so we can hit them
             if (next_location.l == $location[The Sprawling Cemetery])
-            	main_maximisation = "spooky res";
+            	main_maximisation = "spooky res 0.1 muscle";
             if (next_location.l == $location[The Putrid Swamp])
-            	main_maximisation = "stench res";
+            	main_maximisation = "stench res 0.1 muscle";
             if (next_location.l == $location[The Barrow Mounds])
             	main_maximisation = "initiative"; //run away better
             if ($locations[The Bandit Crossroads,The Towering Mountains,The Mystic Wood,The Putrid Swamp,The Cursed Village,The Sprawling Cemetery,The Old Rubee Mine,The Foreboding Cave,The Faerie Cyrkle,The Druidic Campsite,Near the Witch's House,The Evil Cathedral,The Barrow Mounds,The Cursed Village Thieves' Guild,The Troll Fortress,The Labyrinthine Crypt] contains next_location.l)
@@ -1398,7 +1398,7 @@ void FantasyRealmOutputHelp()
     }
 }
 
-//Bosses tested (with saucestorm): dragon, ogre, ley incursion, ghuol king (partially), Archwizard, Phoenix, Vampire
+//Bosses tested (with saucestorm): dragon, ogre, ley incursion, ghuol king (partially), Archwizard, Phoenix, Vampire, Spider Queen
 //Bosses tested (without saucestorm): Spider Queen, Vampire, Master Thief, dragon, ogre, ghuol king (partially), ley incursion, wizard, Phoenix (partially)
 void main(string arguments)
 {
@@ -1486,7 +1486,7 @@ void main(string arguments)
 		__fantasyrealm_strategy = FANTASYREALM_STRATEGY_POTION_OF_HEROISM;
 	}
 	
-    if (arguments.contains_text("gem"))
+    if (arguments.contains_text("gem") || arguments.contains_text("rubee"))
     {
         __fantasyrealm_strategy = FANTASYREALM_STRATEGY_GEMS_GEMS_GEMS;
     }
