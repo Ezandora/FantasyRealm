@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.3";
+string __fantasyrealm_version = "1.1.4";
 boolean __setting_bosses_ready = true;
 boolean __setting_test_saucestorm = false && my_id() == 1557284;
 
@@ -55,12 +55,20 @@ FantasyRealmState FantasyRealmStateParse()
 	FantasyRealmState state;
 	state.hours_left = -1;
 	
-	buffer charpane_pagetext = visit_url("charpane.php");
-	string relevant_text = charpane_pagetext.group_string("FantasyRealm</a> G. E. M.<br>(.*?)<p>")[0][1];
-	if (relevant_text.contains_text("THANK YOU FOR VISITING"))
-		state.hours_left = 0;
-    else
+	
+    if ($item[fantasyrealm g. e. m.].equipped_amount() == 0 && $item[fantasyrealm g. e. m.].available_amount() > 0)
+        equip($slot[acc3], $item[fantasyrealm g. e. m.]);
+        
+    if ($item[fantasyrealm g. e. m.].equipped_amount() > 0)
     {
+        buffer charpane_pagetext = visit_url("charpane.php");
+        string relevant_text = charpane_pagetext.group_string("FantasyRealm</a> G. E. M.<br>(.*?)<p>")[0][1];
+        if (relevant_text.contains_text("THANK YOU FOR VISITING"))
+            state.hours_left = 0;
+        else
+        {
+        	//We should probably parse this but we don't yet.
+        }
     }
 	
 	buffer fantasyrealm_pagetext = visit_url("place.php?whichplace=realm_fantasy");
@@ -330,12 +338,32 @@ The Mystic Wood - don't attack, ???
 √The Labyrinthine Crypt - survive five rounds (heal)
 √The Barrow Mounds - run away
 */
+
+skill FantasyRealmCalculateAttackSkill()
+{
+	if ($skill[saucestorm].have_skill())
+		return $skill[saucestorm];
+    else if ($skill[saucegeyser].have_skill())
+        return $skill[saucegeyser];
+    else if ($skill[weapon of the pastalord].have_skill())
+        return $skill[weapon of the pastalord];
+    else if ($skill[Cannelloni Cannon].have_skill()) //Cannelloni Cannon is underpowered versus certain monsters; prefer everything else first 
+    	return $skill[Cannelloni Cannon];
+    return $skill[none];
+}
+
 string FantasyRealmCombatMacroForLocation(location l)
 {
 	boolean have_double_combat_item = $skill[Ambidextrous Funkslinging].have_skill();
 	string combat_macro = "abort pastround 23;";
 	boolean use_new_age_hurting_crystals = false;
 	boolean use_lovesongs = false;
+	skill attack_skill = FantasyRealmCalculateAttackSkill();
+	if ($skills[Cannelloni Cannon,weapon of the pastalord] contains attack_skill && l == $location[The Troll Fortress] && !$skill[flavour of magic].have_skill())
+	{
+		//won't work. well, it kind of will, but it won't really.
+		attack_skill = $skill[none];
+	}
 	if (l == $location[the cursed village] && false)
 	{
 		use_new_age_hurting_crystals = true;
@@ -393,7 +421,7 @@ string FantasyRealmCombatMacroForLocation(location l)
         	use_lovesongs = true;
         }
     }
-    if (l == $location[The Old Rubee Mine] && !($skill[saucestorm].have_skill() || $skill[saucegeyser].have_skill()))
+    if (l == $location[The Old Rubee Mine] && attack_skill == $skill[none])
     {
     	//We don't have saucestorm/saucegeyser - play it safe and heal at the start.
         //I believe both of those skills will one-hit the grobolds? So.
@@ -447,11 +475,8 @@ string FantasyRealmCombatMacroForLocation(location l)
 	}
 	
 	
-	//Cannelloni Cannon doesn't do group damage... weapon of the pastalord...
-	if ($skill[saucestorm].have_skill() && !__setting_test_saucestorm)
-		combat_macro += "cast saucestorm; repeat;";
-    else if ($skill[saucegeyser].have_skill() && !__setting_test_saucestorm)
-        combat_macro += "cast saucegeyser; repeat;";
+	if (attack_skill != $skill[none] && !__setting_test_saucestorm && l != $location[Near the Witch's House])
+		combat_macro += "cast " + attack_skill + "; repeat;";
     else
     {
     	if (l == $location[Near the Witch's House])
@@ -608,9 +633,12 @@ void FantasyRealmAdventure(location l, int take_choice_id, int take_choice_optio
     	use_familiar($familiar[none]);
     restore_hp(my_maxhp());
     
+    skill attack_skill = FantasyRealmCalculateAttackSkill();
     int desired_mp = 50;
     if (l == $location[The Ghoul King's Catacomb])
     	desired_mp = 200;
+    if (attack_skill == $skill[saucegeyser] || attack_skill == $skill[weapon of the pastalord])
+    	desired_mp = 150;
         
     if (l != $location[the ley nexus])
 	    restore_mp(MIN(my_maxmp(), desired_mp));
@@ -628,6 +656,35 @@ void FantasyRealmAdventure(location l, int take_choice_id, int take_choice_optio
             cli_execute("cast * " + s);
         }
     }
+    
+    if ($skills[Cannelloni Cannon,weapon of the pastalord] contains FantasyRealmCalculateAttackSkill() && $skill[flavour of magic].have_skill())
+    {
+    	skill [element] spirits_for_element = {$element[hot]:$skill[Spirit of Cayenne], $element[cold]:$skill[Spirit of Peppermint], $element[sleaze]:$skill[Spirit of Bacon Grease], $element[spooky]:$skill[Spirit of Wormwood], $element[stench]:$skill[Spirit of Garlic]};
+        
+    	element [location] desired_elements_for_areas = {
+        $location[The Troll Fortress]:$element[hot],
+        $location[The Lair of the Phoenix]:$element[cold]
+        };
+        //You would think the swamp/cemetary would have elementally-aligned monsters. They do not.
+        
+        if (desired_elements_for_areas[l] != $element[none] && spirits_for_element[desired_elements_for_areas[l]].to_effect().have_effect() == 0)
+        	use_skill(spirits_for_element[desired_elements_for_areas[l]]);
+        
+            
+        boolean have_one_active = false;
+        foreach e in $effects[Spirit of Cayenne,Spirit of Peppermint,Spirit of Garlic,Spirit of Wormwood,Spirit of Bacon Grease]
+        {
+            if (e.have_effect() != 0)
+            {
+                have_one_active = true;
+                break;
+            }
+        }
+        if (!have_one_active)
+            cli_execute("cast Spirit of Cayenne");
+    	
+    }
+    
     adv1(l, 0, combat_macro);
     
     string last_encounter = get_property("lastEncounter");
@@ -1398,7 +1455,7 @@ void FantasyRealmOutputHelp()
     }
 }
 
-//Bosses tested (with saucestorm): dragon, ogre, ley incursion, ghuol king (partially), Archwizard, Phoenix, Vampire, Spider Queen
+//Bosses tested (with saucestorm): dragon, ogre, ley incursion, ghuol king (partially), Archwizard, Phoenix, Vampire, Spider Queen, Master Thief
 //Bosses tested (without saucestorm): Spider Queen, Vampire, Master Thief, dragon, ogre, ghuol king (partially), ley incursion, wizard, Phoenix (partially)
 void main(string arguments)
 {
