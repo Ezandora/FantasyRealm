@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.4";
+string __fantasyrealm_version = "1.1.5";
 boolean __setting_bosses_ready = true;
 boolean __setting_test_saucestorm = false && my_id() == 1557284;
 
@@ -553,7 +553,7 @@ void FantasyRealmPrepareToAdventure(location l)
     else if (l == $location[The Ghoul King's Catacomb])
         minimum_modifiers_needed = {"Spooky Resistance":5};
     else if (l == $location[The Ley Nexus])
-        minimum_modifiers_needed = {"Mysticality":500,"Muscle":(350 + monster_level_adjustment()),"Moxie":(350 + monster_level_adjustment())}; //our strategy is to attack! attack! attack!, so out-defence
+        minimum_modifiers_needed = {"Mysticality":500,"Muscle":(400 + monster_level_adjustment()),"Moxie":(400 + monster_level_adjustment())}; //our strategy is to attack! attack! attack!, so out-defence
     else if (l == $location[The Master Thief's Chalet])
         minimum_modifiers_needed = {"Sleaze Resistance":5};
     else if (l == $location[the Ogre Chieftain's Keep])
@@ -1245,7 +1245,7 @@ void FantasyRealmRunLoop()
   
   		if (__fantasyrealm_state.lyle_blocked)
 		{
-            print("You don't have FantasyRealm! Use a one-day pass?" + (in_bad_moon() ? " Drop bad moon?" : ""), "red");
+            print("You don't have FantasyRealm! Use a FantasyRealm guest pass?" + (in_bad_moon() ? " Drop bad moon?" : ""), "red");
             break;
         }
   		if (__fantasyrealm_state.in_unknown_state)
