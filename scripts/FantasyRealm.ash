@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.5";
+string __fantasyrealm_version = "1.1.6";
 boolean __setting_bosses_ready = true;
 boolean __setting_test_saucestorm = false && my_id() == 1557284;
 
@@ -685,7 +685,16 @@ void FantasyRealmAdventure(location l, int take_choice_id, int take_choice_optio
     	
     }
     
-    adv1(l, 0, combat_macro);
+    if (l == $location[the ley nexus])
+    {
+    	//directly visit the ley nexus, so MP-restoring scripts don't happen:
+        //we could also edit their MP settings, but no, because if the script aborts...
+        //FIXME care about pre/post combat scripts
+    	visit_url(l.to_url());
+        run_turn();
+    }
+    else
+	    adv1(l, 0, combat_macro);
     
     string last_encounter = get_property("lastEncounter");
     __fantasyrealm_permanent_state.encounters_seen[last_encounter] = true;
@@ -1284,7 +1293,7 @@ void FantasyRealmRunLoop()
             if ($locations[The Ley Nexus,The Towering Mountains] contains next_location.l)
                 main_maximisation = "1.0 elemental damage 0.5 muscle"; //muscle, so we can hit them
             if (next_location.l == $location[The Sprawling Cemetery])
-            	main_maximisation = "spooky res 0.1 muscle";
+            	main_maximisation = "spooky res 0.1 muscle 0.2 stench damage 0.2 hot damage 0.2 cold damage 0.2 sleaze damage";
             if (next_location.l == $location[The Putrid Swamp])
             	main_maximisation = "stench res 0.1 muscle";
             if (next_location.l == $location[The Barrow Mounds])
