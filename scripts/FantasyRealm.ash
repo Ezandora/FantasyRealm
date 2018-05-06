@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.6";
+string __fantasyrealm_version = "1.1.7";
 boolean __setting_bosses_ready = true;
 boolean __setting_test_saucestorm = false && my_id() == 1557284;
 
@@ -1267,6 +1267,10 @@ void FantasyRealmRunLoop()
         {
         	print("Beaten up, stopping...", "red");
             break;
+        }
+        if (__fantasyrealm_state.hours_left == 0)
+        {
+        	break;
         }
         
         if (!__fantasyrealm_state.started)
