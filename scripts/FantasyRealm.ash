@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.7";
+string __fantasyrealm_version = "1.1.8";
 boolean __setting_bosses_ready = true;
 boolean __setting_test_saucestorm = false && my_id() == 1557284;
 
@@ -67,7 +67,12 @@ FantasyRealmState FantasyRealmStateParse()
             state.hours_left = 0;
         else
         {
-        	//We should probably parse this but we don't yet.
+        	string hours_left_value = get_property("_frHoursLeft");
+            if (hours_left_value != "")
+            {
+            	state.hours_left = hours_left_value.to_int();
+                if (state.hours_left <= 0) state.hours_left = -1; //invalid
+            }
         }
     }
 	
@@ -889,6 +894,19 @@ FantasyRealmNextLocation FantasyRealmPickNextLocation()
             //FIXME check three hours, two hours
             FantasyRealmNextLocation next = FantasyRealmNextLocationToReachTarget($location[The Foreboding Cave], 1289, 1, blank_items, true);
             if (next.valid) return next;
+        }
+        boolean have_all_maps = get_property("frCemetaryUnlocked").to_boolean() && get_property("frMountainsUnlocked").to_boolean() && get_property("frSwampUnlocked").to_boolean() && get_property("frVillageUnlocked").to_boolean() && get_property("frWoodUnlocked").to_boolean();
+        if (have_all_maps && __fantasyrealm_state.hours_left >= 2)
+        {
+        	//We have a spare hour - fight five extra monsters before robbing graves.
+        	location spare_location = $location[The Faerie Cyrkle];
+            if ($item[LyleCo premium rope].item_amount() > 0)
+            	spare_location = $location[The Druidic Campsite];
+            if (!__fantasyrealm_state.areas_at_nc[spare_location])
+            {
+                FantasyRealmNextLocation next = FantasyRealmNextLocationToReachTarget(spare_location, -1, -1);
+                if (next.valid) return next;
+            }
         }
         if ($item[LyleCo premium pickaxe].available_amount() > 0)
         {
