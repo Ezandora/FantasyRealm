@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.8";
+string __fantasyrealm_version = "1.1.9";
 boolean __setting_bosses_ready = true;
 boolean __setting_test_saucestorm = false && my_id() == 1557284;
 
@@ -1320,7 +1320,7 @@ void FantasyRealmRunLoop()
             	main_maximisation = "stench res 0.1 muscle";
             if (next_location.l == $location[The Barrow Mounds])
             	main_maximisation = "initiative"; //run away better
-            if ($locations[The Bandit Crossroads,The Towering Mountains,The Mystic Wood,The Putrid Swamp,The Cursed Village,The Sprawling Cemetery,The Old Rubee Mine,The Foreboding Cave,The Faerie Cyrkle,The Druidic Campsite,Near the Witch's House,The Evil Cathedral,The Barrow Mounds,The Cursed Village Thieves' Guild,The Troll Fortress,The Labyrinthine Crypt] contains next_location.l)
+            if (($locations[The Bandit Crossroads,The Towering Mountains,The Mystic Wood,The Putrid Swamp,The Cursed Village,The Sprawling Cemetery,The Old Rubee Mine,The Foreboding Cave,The Faerie Cyrkle,The Druidic Campsite,Near the Witch's House,The Evil Cathedral,The Barrow Mounds,The Cursed Village Thieves' Guild,The Troll Fortress,The Labyrinthine Crypt] contains next_location.l) && !__fantasyrealm_state.areas_at_nc[next_location.l])
             {
                 foreach it in $items[LyleCo premium magnifying glass,LyleCo premium monocle]
                 {
@@ -1339,7 +1339,7 @@ void FantasyRealmRunLoop()
                     maximise_string += " -offhand";
                 }
             }
-            if ($locations[The Evil Cathedral,The Cursed Village,The Ogre Chieftain's Keep,The Ley Nexus,The Mystic Wood,The Sprawling Cemetery,The Towering Mountains,] contains next_location.l)
+            if ($locations[The Evil Cathedral,The Cursed Village,The Ogre Chieftain's Keep,The Ley Nexus,The Mystic Wood,The Sprawling Cemetery,The Towering Mountains] contains next_location.l && !__fantasyrealm_state.areas_at_nc[next_location.l])
             {
                 maximise_string += " +equip double-ice box";
             }
