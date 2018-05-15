@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.9";
+string __fantasyrealm_version = "1.1.10";
 boolean __setting_bosses_ready = true;
 boolean __setting_test_saucestorm = false && my_id() == 1557284;
 
@@ -1320,6 +1320,8 @@ void FantasyRealmRunLoop()
             	main_maximisation = "stench res 0.1 muscle";
             if (next_location.l == $location[The Barrow Mounds])
             	main_maximisation = "initiative"; //run away better
+            if (next_location.l == $location[The Labyrinthine Crypt])
+            	main_maximisation = "initiative"; //maximise something other than HP. NOTE: we don't want to do -HP, because if we get down to 1 HP... initiative seems easy enough
             if (($locations[The Bandit Crossroads,The Towering Mountains,The Mystic Wood,The Putrid Swamp,The Cursed Village,The Sprawling Cemetery,The Old Rubee Mine,The Foreboding Cave,The Faerie Cyrkle,The Druidic Campsite,Near the Witch's House,The Evil Cathedral,The Barrow Mounds,The Cursed Village Thieves' Guild,The Troll Fortress,The Labyrinthine Crypt] contains next_location.l) && !__fantasyrealm_state.areas_at_nc[next_location.l])
             {
                 foreach it in $items[LyleCo premium magnifying glass,LyleCo premium monocle]
@@ -1551,7 +1553,7 @@ void main(string arguments)
         __fantasyrealm_strategy = FANTASYREALM_STRATEGY_SPIDER_QUEEN;
     else if (arguments.contains_text("duke") || arguments.contains_text("vampire"))
         __fantasyrealm_strategy = FANTASYREALM_STRATEGY_DUKE_VAMPIRE;
-    else if (arguments.contains_text("master") || arguments.contains_text("Schwartz") || arguments == "thief" || arguments == "master thief")
+    else if (arguments.contains_text("master") || arguments.contains_text("Schwartz") || arguments == "thief" || arguments == "master thief" || arguments == "confirm thief")
         __fantasyrealm_strategy = FANTASYREALM_STRATEGY_MASTER_THIEF;
     else if (arguments.contains_text("skeleton") && arguments.contains_text("warrior"))
         __fantasyrealm_strategy = FANTASYREALM_STRATEGY_SKELETON_LORD_WARRIOR;
