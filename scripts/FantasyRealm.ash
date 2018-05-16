@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.10";
+string __fantasyrealm_version = "1.1.11";
 boolean __setting_bosses_ready = true;
 boolean __setting_test_saucestorm = false && my_id() == 1557284;
 
@@ -1523,7 +1523,7 @@ void main(string arguments)
         foreach it in $items[bad rum and good cola,denastified haunch,potion of heroism]
         {
         	//FIXME check if we can do that strategy
-            if (chosen_item == $item[none] || chosen_item.shop_amount() > it.shop_amount())
+            if (chosen_item == $item[none] || chosen_item.mall_price() > it.mall_price())
             	chosen_item = it;
         }
         if (chosen_item == $item[bad rum and good cola])
@@ -1646,7 +1646,7 @@ void main(string arguments)
                 foreach it in $items[bad rum and good cola,denastified haunch,potion of heroism]
                 {
                     //FIXME check if we can do that strategy
-                    if (chosen_item == $item[none] || chosen_item.available_amount() + chosen_item.shop_amount() > it.available_amount() + it.shop_amount())
+                    if (chosen_item.available_amount() + chosen_item.shop_amount() > it.available_amount() + it.shop_amount() && chosen_item.mall_price() >= 50000)
                         chosen_item = it;
                 }
                 if (__fantasyrealm_strategy != FANTASYREALM_STRATEGY_NONE)
@@ -1658,7 +1658,7 @@ void main(string arguments)
                     __fantasyrealm_strategy = FANTASYREALM_STRATEGY_DENASTIFIED_HAUNCH;
                 else if (chosen_item == $item[potion of heroism])
                     __fantasyrealm_strategy = FANTASYREALM_STRATEGY_POTION_OF_HEROISM;
-                else //what?
+                else
 	                __fantasyrealm_strategy = FANTASYREALM_STRATEGY_GEMS_GEMS_GEMS;
             }
             
