@@ -1,7 +1,11 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.11";
+string __fantasyrealm_version = "1.1.12";
 boolean __setting_bosses_ready = true;
+
+
+//Personal debugging code:
 boolean __setting_test_saucestorm = false && my_id() == 1557284;
+boolean __setting_deliberately_lose = false && my_id() == 1557284;
 
 Record FantasyRealmState
 {
@@ -359,6 +363,8 @@ skill FantasyRealmCalculateAttackSkill()
 
 string FantasyRealmCombatMacroForLocation(location l)
 {
+	if (__setting_deliberately_lose)
+		return "use seal tooth; repeat;";
 	boolean have_double_combat_item = $skill[Ambidextrous Funkslinging].have_skill();
 	string combat_macro = "abort pastround 23;";
 	boolean use_new_age_hurting_crystals = false;
@@ -1245,7 +1251,7 @@ void FantasyRealmStartQuest()
     foreach it in $items[FantasyRealm Warrior's Helm,FantasyRealm Mage's Hat,FantasyRealm Rogue's Mask]
     {
         if (it.available_amount() < which_hat.available_amount() || which_hat == $item[none])
-                which_hat = it;
+            which_hat = it;
     }
     //FIXME proper hat for boss
     visit_url("place.php?whichplace=realm_fantasy&action=fr_initcenter");
@@ -1281,11 +1287,6 @@ void FantasyRealmRunLoop()
             break;
         }
         
-        if ($effect[beaten up].have_effect() > 0)
-        {
-        	print("Beaten up, stopping...", "red");
-            break;
-        }
         if (__fantasyrealm_state.hours_left == 0)
         {
         	break;
@@ -1322,6 +1323,8 @@ void FantasyRealmRunLoop()
             	main_maximisation = "initiative"; //run away better
             if (next_location.l == $location[The Labyrinthine Crypt])
             	main_maximisation = "initiative"; //maximise something other than HP. NOTE: we don't want to do -HP, because if we get down to 1 HP... initiative seems easy enough
+            if (__setting_deliberately_lose)
+	            main_maximisation = "-muscle -100.0 hp";
             if (($locations[The Bandit Crossroads,The Towering Mountains,The Mystic Wood,The Putrid Swamp,The Cursed Village,The Sprawling Cemetery,The Old Rubee Mine,The Foreboding Cave,The Faerie Cyrkle,The Druidic Campsite,Near the Witch's House,The Evil Cathedral,The Barrow Mounds,The Cursed Village Thieves' Guild,The Troll Fortress,The Labyrinthine Crypt] contains next_location.l) && !__fantasyrealm_state.areas_at_nc[next_location.l])
             {
                 foreach it in $items[LyleCo premium magnifying glass,LyleCo premium monocle]
@@ -1341,7 +1344,7 @@ void FantasyRealmRunLoop()
                     maximise_string += " -offhand";
                 }
             }
-            if ($locations[The Evil Cathedral,The Cursed Village,The Ogre Chieftain's Keep,The Ley Nexus,The Mystic Wood,The Sprawling Cemetery,The Towering Mountains] contains next_location.l && !__fantasyrealm_state.areas_at_nc[next_location.l])
+            if ($locations[The Evil Cathedral,The Cursed Village,The Ogre Chieftain's Keep,The Ley Nexus,The Mystic Wood,The Sprawling Cemetery,The Towering Mountains] contains next_location.l && !__fantasyrealm_state.areas_at_nc[next_location.l] && !__setting_deliberately_lose)
             {
                 maximise_string += " +equip double-ice box";
             }
@@ -1364,6 +1367,12 @@ void FantasyRealmRunLoop()
         
         FantasyRealmAdventure(next_location.l, next_location.choice_id, next_location.choice_option);
         //break;
+        buffer combat_page_text = run_combat();
+        if ($effect[beaten up].have_effect() > 0 || (combat_page_text.contains_text("<p>You lose.  You slink away, dejected and defeated.") && combat_page_text.contains_text("<b>Combat!</b>") && get_property("lastEncounter").to_monster() != $monster[none]))
+        {
+            print("Beaten up, stopping...", "red");
+            break;
+        }
 	}
 }
 
