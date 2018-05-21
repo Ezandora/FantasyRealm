@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.12";
+string __fantasyrealm_version = "1.1.13";
 boolean __setting_bosses_ready = true;
 
 
@@ -1532,7 +1532,7 @@ void main(string arguments)
         foreach it in $items[bad rum and good cola,denastified haunch,potion of heroism]
         {
         	//FIXME check if we can do that strategy
-            if (chosen_item == $item[none] || chosen_item.mall_price() > it.mall_price())
+            if (chosen_item == $item[none] || chosen_item.mall_price() < it.mall_price())
             	chosen_item = it;
         }
         if (chosen_item == $item[bad rum and good cola])
