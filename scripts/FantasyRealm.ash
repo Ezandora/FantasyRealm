@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.1.13";
+string __fantasyrealm_version = "1.2";
 boolean __setting_bosses_ready = true;
 
 
@@ -1306,11 +1306,13 @@ void FantasyRealmRunLoop()
         
         if (!did_make_outfit || true)
         {
-        	string main_maximisation = "muscle";
+        	string main_maximisation = "0.5 hp 0.1 myst 1.0 spell damage percent";//"muscle";
         	string maximise_string;
             //Hmm. Maybe we should add -ML?
 			maximise_string = "-tie -familiar -equip buddy bjorn -equip shield of the Skeleton Lord +equip fantasyrealm g. e. m.";
    			
+			if (FantasyRealmCalculateAttackSkill() == $skill[none])
+				main_maximisation = "muscle 0.5 hp";
 			if (next_location.l == $location[The Faerie Cyrkle])
 				main_maximisation = "all res";
             if ($locations[The Ley Nexus,The Towering Mountains] contains next_location.l)
@@ -1512,6 +1514,8 @@ void main(string arguments)
 	
     if ($item[double-ice box].available_amount() == 0 && can_interact())
         cli_execute("acquire double-ice box");
+    //if ($item[nurse's hat].available_amount() == 0 && can_interact() && $item[nurse's hat].mall_price() < 20000 && $item[nurse's hat].can_equip()) //not enough in the mall
+        //cli_execute("acquire nurse's hat");
 	
 	if (arguments.contains_text("help") || arguments == "")
 	{
