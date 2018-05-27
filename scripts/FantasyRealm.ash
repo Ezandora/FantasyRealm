@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.2";
+string __fantasyrealm_version = "1.2.1";
 boolean __setting_bosses_ready = true;
 
 
@@ -1309,7 +1309,7 @@ void FantasyRealmRunLoop()
         	string main_maximisation = "0.5 hp 0.1 myst 1.0 spell damage percent";//"muscle";
         	string maximise_string;
             //Hmm. Maybe we should add -ML?
-			maximise_string = "-tie -familiar -equip buddy bjorn -equip shield of the Skeleton Lord +equip fantasyrealm g. e. m.";
+			maximise_string = "-tie -familiar -equip buddy bjorn -equip shield of the Skeleton Lord +equip fantasyrealm g. e. m. -equip little round pebble";
    			
 			if (FantasyRealmCalculateAttackSkill() == $skill[none])
 				main_maximisation = "muscle 0.5 hp";
