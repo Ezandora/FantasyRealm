@@ -1,5 +1,5 @@
 import "scripts/gain.ash";
-string __fantasyrealm_version = "1.2.1";
+string __fantasyrealm_version = "1.2.2";
 boolean __setting_bosses_ready = true;
 
 
@@ -777,9 +777,7 @@ FantasyRealmNextLocation FantasyRealmNextLocationToReachTarget(location target_l
     {
     	//We've opened it before, and it's gone. Forever.
     	return FantasyRealmNextLocationMake();
-    } 
-    //Follow path to unlock:
-    
+    }
     
     boolean [item] blank_equipment;
     //Main areas:
@@ -1350,6 +1348,8 @@ void FantasyRealmRunLoop()
             {
                 maximise_string += " +equip double-ice box";
             }
+            else
+                maximise_string += " -equip double-ice box";
             maximise_string = main_maximisation + " " + maximise_string;
             if (last_maximise_string != maximise_string)
             {
