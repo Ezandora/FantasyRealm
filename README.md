@@ -13,5 +13,5 @@ Once it's installed, go to the Scripts menu, then select "FantasyRealm.ash". Typ
 To update the script itself, run this command in the graphical CLI:
 
 <pre>
-svn update
+git update
 </pre>
